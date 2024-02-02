@@ -1,0 +1,24 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  # export python requirements
+  - repo: https://github.com/pdm-project/pdm
+    rev: 2.12.3 # a PDM release exposing the hook
+    hooks:
+      - id: pdm-export
+        # command arguments, e.g.:
+        args: ["-o", "requirements.txt", "--without-hashes"]
+        files: ^pdm.lock$
+  # reformat python
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.1.9"
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --show-fixes]
+      - id: ruff-format
