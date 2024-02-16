@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    conn: asyncpg.connection.Connection = await asyncpg.connect(
+    db_connection = await asyncpg.connect(
         "postgresql://postgres:changemetoyoupassword@localhost/postgres"
     )
 
@@ -19,11 +19,11 @@ async def lifespan(app: FastAPI):
         connection, pid, channel, payload = args
         await manager.broadcast(payload)
 
-    await conn.add_listener("new_result", broadcast_message)
+    await db_connection.add_listener("new_result", broadcast_message)
 
-    yield
+    yield {"db_connection": db_connection}
 
-    await conn.close()
+    await db_connection.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -59,12 +59,19 @@ async def index(request: Request):
     )
 
 
-@app.get("/vote/{id}", response_class=HTMLResponse)
+@app.post("/vote/{id}", response_class=HTMLResponse)
 async def vote(request: Request, id: int):
+    insert_value = True if id == 0 else False
+    await request.state.db_connection.execute(
+        """
+        INSERT INTO votes (vote) VALUES ($1)
+    """,
+        insert_value,
+    )
     return templates.TemplateResponse(
         request=request,
         name="vote_response.html",
-        context={"vote_value": "left" if id == 0 else "right"},
+        context={"vote_value": "left" if insert_value else "right"},
     )
 
 
