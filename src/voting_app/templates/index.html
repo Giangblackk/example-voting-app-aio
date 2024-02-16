@@ -9,6 +9,10 @@
 
 <body>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+    <div hx-ext="ws" ws-connect="/result">
+        <div id="latest-result"></div>
+    </div>
     <button hx-post="/vote/0" hx-target="#result-area">Vote Left</button>
     <button hx-post="/vote/1" hx-target="#result-area">Vote Right</button>
     <div id="result-area"></div>
