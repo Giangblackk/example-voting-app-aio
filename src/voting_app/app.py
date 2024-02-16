@@ -8,8 +8,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-result_queue = asyncio.Queue()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,11 +15,11 @@ async def lifespan(app: FastAPI):
         "postgresql://postgres:changemetoyoupassword@localhost/postgres"
     )
 
-    def result_queue_put(*args):
+    async def broadcast_message(*args):
         connection, pid, channel, payload = args
-        result_queue.put_nowait(payload)
+        await manager.broadcast(payload)
 
-    await conn.add_listener("new_result", result_queue_put)
+    await conn.add_listener("new_result", broadcast_message)
 
     yield
 
@@ -74,9 +72,7 @@ async def vote(request: Request, id: int):
 async def websocket_result(websocket: WebSocket):
     await manager.connect(websocket)
     try:
-        while True:
-            message = await result_queue.get()
-            await manager.broadcast(message)
+        await asyncio.Future()
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
