@@ -11,9 +11,13 @@ repos:
   - repo: https://github.com/pdm-project/pdm
     rev: 2.12.3 # a PDM release exposing the hook
     hooks:
+      # export all dependencies
       - id: pdm-export
-        # command arguments, e.g.:
         args: ["-o", "requirements.txt", "--without-hashes"]
+        files: ^pdm.lock$
+      # export production dependencies only
+      - id: pdm-export
+        args: ["-o", "prod.requirements.txt", "--without-hashes", "--prod"]
         files: ^pdm.lock$
   # reformat python
   - repo: https://github.com/astral-sh/ruff-pre-commit
