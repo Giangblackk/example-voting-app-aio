@@ -27,6 +27,16 @@ services:
     networks:
       - postgres
     restart: unless-stopped
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    networks:
+      - postgres
 
 networks:
   postgres:
