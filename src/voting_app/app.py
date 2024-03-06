@@ -10,6 +10,24 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.endpoints import WebSocketEndpoint
 from starlette.routing import WebSocketRoute
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    DB_HOST: str = "postgres"
+    DB_PORT: int = 5432
+    DB_NAME: str = "postgres"
+    DB_USERNAME: str = "postgres"
+    DB_PASSWORD: str = "changemetoyoupassword"
+
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
+
+
+settings = Settings()
 
 
 class ConnectionManager:
@@ -51,7 +69,7 @@ class CustomWebSocketEndpoint(WebSocketEndpoint):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db_connection = await asyncpg.connect(
-        "postgresql://postgres:changemetoyoupassword@localhost/postgres"
+        f"postgresql://{settings.DB_USERNAME}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
     )
 
     async def broadcast_message(*args):
