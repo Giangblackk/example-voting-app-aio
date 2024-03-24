@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 from contextlib import asynccontextmanager
 from typing import List
 
@@ -61,14 +60,16 @@ class WebSocketConnectionManager:
         Args:
             message (str): the message to be broadcasted
         """
-        _, true_votes, false_votes = map(int, message.split("|"))
+        _, true_votes, false_votes, create_ts = message.split("|")
+        true_votes = int(true_votes)
+        false_votes = int(false_votes)
         total_votes = true_votes + false_votes
         true_vote_perc = 100 * true_votes / total_votes
         false_vote_perc = 100 * false_votes / total_votes
         for connection in self.active_connections:
             formatted_msg = templates.get_template("result_response.html").render(
                 {
-                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": create_ts,
                     "total_votes": total_votes,
                     "true_vote_perc": true_vote_perc,
                     "false_vote_perc": false_vote_perc,
@@ -161,6 +162,45 @@ async def index(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
+    )
+
+
+@app.get("/result/latest", response_class=HTMLResponse)
+async def get_latest_result(request: Request):
+    """Get latest result
+
+    Args:
+        request (Request): Request object
+    """
+    row = await request.state.db_connection.fetchrow(
+        """SELECT
+            *
+        FROM
+            results r
+        WHERE
+            r.id = (
+            SELECT
+                max(id)
+            FROM
+                results r2)
+        """
+    )
+    true_votes = row["vote_true"]
+    false_votes = row["vote_false"]
+    created_ts = row["created_at"]
+    total_votes = true_votes + false_votes
+    true_vote_perc = 100 * true_votes / total_votes
+    false_vote_perc = 100 * false_votes / total_votes
+
+    return templates.TemplateResponse(
+        request=request,
+        name="result_response.html",
+        context={
+            "timestamp": created_ts,
+            "total_votes": total_votes,
+            "true_vote_perc": true_vote_perc,
+            "false_vote_perc": false_vote_perc,
+        },
     )
 
 

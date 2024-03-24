@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
     <div hx-ext="ws" ws-connect="/result">
-        <div id="latest-result"></div>
+        <div id="latest-result" hx-get="/result/latest" hx-trigger="load" hx-target="this" hx-swap="beforeend"></div>
     </div>
     <button hx-post="/vote/0" hx-target="#result-area">Vote Left</button>
     <button hx-post="/vote/1" hx-target="#result-area">Vote Right</button>
