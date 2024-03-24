@@ -38,7 +38,7 @@ FOR EACH ROW EXECUTE PROCEDURE update_result();
 -- Create function to notify new result
 CREATE OR REPLACE FUNCTION notify_new_result() RETURNS TRIGGER AS $$
 BEGIN
-    PERFORM pg_notify('new_result', NEW.id::TEXT);
+    PERFORM pg_notify('new_result', concat_ws('|', NEW.id::TEXT, NEW.vote_true::TEXT, NEW.vote_false::TEXT));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

@@ -61,9 +61,18 @@ class WebSocketConnectionManager:
         Args:
             message (str): the message to be broadcasted
         """
+        _, true_votes, false_votes = map(int, message.split("|"))
+        total_votes = true_votes + false_votes
+        true_vote_perc = 100 * true_votes / total_votes
+        false_vote_perc = 100 * false_votes / total_votes
         for connection in self.active_connections:
             formatted_msg = templates.get_template("result_response.html").render(
-                {"timestamp": datetime.datetime.now(), "message": message}
+                {
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "total_votes": total_votes,
+                    "true_vote_perc": true_vote_perc,
+                    "false_vote_perc": false_vote_perc,
+                }
             )
             await connection.send_text(formatted_msg)
 

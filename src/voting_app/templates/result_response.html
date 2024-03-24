@@ -1,3 +1,4 @@
 <div hx-swap-oob="beforeend:#latest-result">
-    <p>Result at {{ timestamp }} = {{ message }}</p>
+    <p>{{ timestamp }} - {{ "%.2f"|format(false_vote_perc) }}% LEFT and {{ "%.2f"|format(true_vote_perc) }}% RIGHT in
+        TOTAL {{ total_votes }} votes</p>
 </div>
