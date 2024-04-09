@@ -11,6 +11,7 @@ class VotingBehavior(TaskSet):
 
     def on_stop(self):
         self.ws.close()
+        return super().on_stop()
 
     @task
     def vote_and_wait(self):
