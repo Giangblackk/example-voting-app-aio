@@ -30,4 +30,5 @@ lint = [
 test = [
     "pytest>=8.0.1",
     "locust>=2.24.1",
+    "websocket-client>=1.7.0",
 ]
