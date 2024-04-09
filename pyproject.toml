@@ -29,4 +29,5 @@ lint = [
 ]
 test = [
     "pytest>=8.0.1",
+    "locust>=2.24.1",
 ]
