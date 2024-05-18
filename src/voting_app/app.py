@@ -7,9 +7,9 @@ from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.endpoints import WebSocketEndpoint
 from starlette.routing import WebSocketRoute
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
