@@ -124,19 +124,23 @@ async def lifespan(app: FastAPI):
     Yields:
         dict: database connection
     """
-    db_connection = await asyncpg.connect(
-        f"postgresql://{settings.DB_USERNAME}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+    connection_pool = await asyncpg.create_pool(
+        f"postgresql://{settings.DB_USERNAME}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}",
+        max_size=2,
+        min_size=2,
     )
 
     async def broadcast_message(*args):
         connection, pid, channel, payload = args
         await ws_conn_manager.broadcast(payload)
 
+    db_connection = await connection_pool.acquire()
     await db_connection.add_listener("new_result", broadcast_message)
 
-    yield {"db_connection": db_connection}
+    yield {"connection_pool": connection_pool}
 
-    await db_connection.close()
+    await connection_pool.release(db_connection)
+    await connection_pool.close()
 
 
 # create FastAPI app object, with custom lifespan and websocket route to custom websocket endpoint
@@ -172,19 +176,21 @@ async def get_latest_result(request: Request):
     Args:
         request (Request): Request object
     """
-    row = await request.state.db_connection.fetchrow(
-        """SELECT
-            *
-        FROM
-            results r
-        WHERE
-            r.id = (
-            SELECT
-                max(id)
-            FROM
-                results r2)
-        """
-    )
+    async with request.state.connection_pool.acquire() as db_connection:
+        async with db_connection.transaction():
+            row = await db_connection.fetchrow(
+                """SELECT
+                    *
+                FROM
+                    results r
+                WHERE
+                    r.id = (
+                    SELECT
+                        max(id)
+                    FROM
+                        results r2)
+                """
+            )
     true_votes = row["vote_true"]
     false_votes = row["vote_false"]
     created_ts = row["created_at"]
@@ -213,12 +219,14 @@ async def vote(request: Request, id: int):
         id (int): vote value
     """
     insert_value = True if id == 0 else False
-    await request.state.db_connection.execute(
-        """
-        INSERT INTO votes (vote) VALUES ($1)
-    """,
-        insert_value,
-    )
+    async with request.state.connection_pool.acquire() as db_connection:
+        async with db_connection.transaction():
+            await db_connection.execute(
+                """
+                INSERT INTO votes (vote) VALUES ($1)
+            """,
+                insert_value,
+            )
     return templates.TemplateResponse(
         request=request,
         name="vote_response.html",
