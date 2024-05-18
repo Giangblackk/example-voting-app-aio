@@ -138,8 +138,9 @@ async def lifespan(app: FastAPI):
     await db_connection.add_listener("new_result", broadcast_message)
 
     yield {"connection_pool": connection_pool}
-
+    await db_connection.remove_listener("new_result", broadcast_message)
     await connection_pool.release(db_connection)
+    # await db_connection.close()
     await connection_pool.close()
 
 
